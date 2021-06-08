@@ -2,15 +2,15 @@
 
 # 숙소예약(AirBnB)
 
-본 예제는 MSA/DDD/Event Storming/EDA 를 포괄하는 분석/설계/구현/운영 전단계를 커버하도록 구성한 예제입니다.
-이는 클라우드 네이티브 애플리케이션의 개발에 요구되는 체크포인트들을 통과하기 위한 예시 답안을 포함합니다.
-- 체크포인트 : https://workflowy.com/s/assessment-check-po/T5YrzcMewfo4J6LW
+본 예제는 airbnb_project 팀 과제에 대한 개인 평가 자료입니다.
+- 팀 과제 :  https://github.com/indie2k/airbnb_project
 
 
 # Table of contents
 
-- [예제 - 숙소예약](#---)
+- [예제 - 개인 평가 자료](#---)
   - [서비스 시나리오](#서비스-시나리오)
+  - [팀 과제에 추가된 서비스 시나리오](#서비스-시나리오)
   - [체크포인트](#체크포인트)
   - [분석/설계](#분석설계)
   - [구현:](#구현-)
@@ -25,6 +25,7 @@
     - [오토스케일 아웃](#오토스케일-아웃)
     - [무정지 재배포](#무정지-재배포)
   - [신규 개발 조직의 추가](#신규-개발-조직의-추가)
+
 
 # 서비스 시나리오
 
@@ -49,6 +50,29 @@ AirBnB 커버하기
 1. 성능
     1. 모든 방에 대한 정보 및 예약 상태 등을 한번에 확인할 수 있어야 한다  (CQRS)
     1. 예약의 상태가 바뀔 때마다 메시지로 알림을 줄 수 있어야 한다  (Event driven)
+
+# 팀 과제에 추가된 서비스 시나리오
+
+Mileage 결제 및 제휴상품 구매 기능 추가하기
+
+추가된 기능적 요구사항
+1. 회원 가입 시 최조 mileage를 부여하고 Review를 남길 경우 추가로 mileage를 부여한다.
+2. 임대 숙소 예약 결제 시 mileage를 사용할수 있다.
+3. 예약 지역 근처의 제휴상품 (activity, 맛집 이용권 등)을 등록하고 판매할수 있다.
+5. 제휴상품 결제 시 mileage를 사용할수 있다.
+6. 예약 및 제휴상품 구입 내역에 대해 Message 전달을 한다.
+7. mileage 및 제휴상품 구매 등을 한 화면에서 확인 할 수 있다.(viewpage)
+
+추가된 비기능적 요구사항
+1. 트랜잭션
+    1. 결제시 mileage 차감이 같이 진행되어야 한다.  (Sync 호출)
+	2. 결제가 되지 않은 제휴상품 구매 건은 성립되지 않아야 한다.  (Sync 호출)
+1. 장애격리
+    1. 제휴상품 등록 및 리뷰장성 시 mileage 추가 부여, 메시지 전송 기능이 수행되지 않더라도 예약 및 제휴상품 구매 등은 365일 24시간 받을 수 있어야 한다  Async (event-driven), Eventual Consistency
+    1. 제휴상품 주문 시스템이 과중되면 사용자를 잠시동안 받지 않고 잠시 후에 하도록 유도한다  Circuit breaker, fallback
+1. 성능
+    1. 회원 가입, mileage, 제휴상품 구매 등을 한번에 확인할 수 있어야 한다  (CQRS)
+    1. 상태가 바뀔 때마다 메시지로 알림을 줄 수 있어야 한다  (Event driven)
 
 
 # 체크포인트
@@ -114,7 +138,7 @@ AirBnB 커버하기
   ![image](https://user-images.githubusercontent.com/77129832/119316165-96ca3680-bcb1-11eb-9a91-f2b627890bab.png)
 
 ## TO-BE 조직 (Vertically-Aligned)  
-  ![image](https://user-images.githubusercontent.com/77129832/119315258-a09f6a00-bcb0-11eb-9940-c2a82f2f7d09.png)
+  ![TO-BE조직](https://user-images.githubusercontent.com/38099203/121190763-51f3f180-c8a6-11eb-8b09-b122dcf5f2bc.png)
 
 
 ## Event Storming 결과
