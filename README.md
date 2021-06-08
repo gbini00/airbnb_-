@@ -142,7 +142,7 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 
 
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/QtpQtDiH1Je3wad2QxZUJVvnLzO2/share/6f36e16efdf8c872da3855fedf7f3ea9
+* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/Dln1uw3DPPRk4Av4kdEG49YjZZ23/mine/5bb5e6b5f6167c87380b1b5b65c45217
 
 
 ### 이벤트 도출
