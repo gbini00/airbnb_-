@@ -138,7 +138,7 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
   ![image](https://user-images.githubusercontent.com/77129832/119316165-96ca3680-bcb1-11eb-9a91-f2b627890bab.png)
 
 ## TO-BE 조직 (Vertically-Aligned)  
-  ![TO-BE조직](https://user-images.githubusercontent.com/38099203/121190763-51f3f180-c8a6-11eb-8b09-b122dcf5f2bc.png)
+  ![TO-BE조직](https://user-images.githubusercontent.com/38099203/121192817-44d80200-c8a8-11eb-9fb7-2679ce77005e.png)
 
 
 ## Event Storming 결과
