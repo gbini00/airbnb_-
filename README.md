@@ -145,11 +145,14 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 * MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/Dln1uw3DPPRk4Av4kdEG49YjZZ23/mine/5bb5e6b5f6167c87380b1b5b65c45217
 
 
-### 이벤트 도출
-![image](https://user-images.githubusercontent.com/15603058/119298548-337fda80-bc98-11eb-9f96-7d583d156fb9.png)
+### mileage 및 제휴상품 이벤트 신규 도출
+![신규 개인과제 이벤트 도출](https://user-images.githubusercontent.com/38099203/121197121-03e1ec80-c8ac-11eb-891c-934bd05c4574.PNG)
+
+### mileage 및 제휴상품 적용을 위한 기존 이벤트 수정
+![기존 팀과제 이벤트 수정](https://user-images.githubusercontent.com/38099203/121197292-2a078c80-c8ac-11eb-9e2b-f4d228281594.PNG)
 
 
-### 부적격 이벤트 탈락
+### mileage 및 제휴상품 부적격 이벤트 탈락
 ![image](https://user-images.githubusercontent.com/15603058/119298594-4f837c00-bc98-11eb-9f67-ec2e882e1f33.png)
 
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
