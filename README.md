@@ -146,76 +146,71 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 
 
 ### mileage 및 제휴상품 이벤트 신규 도출
-![신규 개인과제 이벤트 도출](https://user-images.githubusercontent.com/38099203/121197121-03e1ec80-c8ac-11eb-891c-934bd05c4574.PNG)
+![신규 개인과제 이벤트 도출](https://user-images.githubusercontent.com/38099203/121212087-00ecf900-c8b8-11eb-8570-e01fcc503338.PNG)
 
 ### mileage 및 제휴상품 적용을 위한 기존 이벤트 수정
-![기존 팀과제 이벤트 수정](https://user-images.githubusercontent.com/38099203/121197292-2a078c80-c8ac-11eb-9e2b-f4d228281594.PNG)
+![기존 팀과제 이벤트 수정](https://user-images.githubusercontent.com/38099203/121205022-4c9ca400-c8b2-11eb-95f6-574bfb4e89c5.PNG)
 
+    - 결제 시스템 : 
+      - mlieage 사용할수 있도록 memId와 mileage 사용 정보 저장
+	  - 제휴상품 및 주문정보 저장
+    - 숙소 예약 시스템 : 
+      - mlieage 사용할수 있도록 memId와 mileage 사용 정보 저장
+    - 리뷰 시스템 : 
+      - 리뷰작성 시 mileage 부여를 위한 정보 저장
 
 ### mileage 및 제휴상품 부적격 이벤트 탈락
-![image](https://user-images.githubusercontent.com/15603058/119298594-4f837c00-bc98-11eb-9f67-ec2e882e1f33.png)
+![신규 개인과제 부적격 이벤트 퇴출](https://user-images.githubusercontent.com/38099203/121212289-2b3eb680-c8b8-11eb-8fd1-d1dba4b3b3a1.PNG)
 
-    - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
-        - 등록시>RoomSearched, 예약시>RoomSelected :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
 
-### 액터, 커맨드 부착하여 읽기 좋게
-![image](https://user-images.githubusercontent.com/15603058/119298993-113a8c80-bc99-11eb-9bae-4b911317d810.png)
+### 신규 개인과제 액터, 커맨드 부착하여 읽기 좋게
+![신규 개인과제 액터, 커맨드 부착하여 읽기 좋게](https://user-images.githubusercontent.com/38099203/121214558-2f6bd380-c8ba-11eb-8d26-1218fe73638f.PNG)
 
-### 어그리게잇으로 묶기
-![image](https://user-images.githubusercontent.com/15603058/119299589-2663eb00-bc9a-11eb-83b9-de7f3efe7548.png)
 
-    - Room, Reservation, Payment, Review 은 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
+### 신규 개인과제 이벤트 어그리게잇으로 묶기
+![신규 개인과제 이벤트 어그리게잇으로 묶기](https://user-images.githubusercontent.com/38099203/121215146-b8830a80-c8ba-11eb-9410-b6354d95a82b.PNG)
 
-### 바운디드 컨텍스트로 묶기
+    - Member, Affiliateproduct, Order 등은 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
 
-![image](https://user-images.githubusercontent.com/15603058/119300858-6c21b300-bc9c-11eb-9b3f-c85aff51658f.png)
+### 신규 개인과제 이벤트 바운디드 컨텍스트로 묶기
 
-    - 도메인 서열 분리 
-        - Core Domain:  reservation, room : 없어서는 안될 핵심 서비스이며, 연간 Up-time SLA 수준을 99.999% 목표, 배포주기는 reservation 의 경우 1주일 1회 미만, room 의 경우 1개월 1회 미만
-        - Supporting Domain:   message, viewpage : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
-        - General Domain:   payment : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음 
+![신규 개인과제 이벤트 바운디드 컨텍스트로 묶기](https://user-images.githubusercontent.com/38099203/121215886-5c6cb600-c8bb-11eb-8d6f-3017309df19e.PNG)
 
-### 폴리시 부착 (괄호는 수행주체, 폴리시 부착을 둘째단계에서 해놔도 상관 없음. 전체 연계가 초기에 드러남)
+ 
+### 기존 팀과제 이벤트와 신규 개인과제 이벤트 폴리시 부착
 
-![image](https://user-images.githubusercontent.com/15603058/119303664-1b608900-bca1-11eb-8667-7545f32c9fb9.png)
+![기존 팀과제 이벤트와 신규 개인과제 이벤트 폴리시 부착](https://user-images.githubusercontent.com/38099203/121220414-8cb65380-c8bf-11eb-9408-0fe9b7bfa754.PNG)
 
-### 폴리시의 이동과 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
 
-![image](https://user-images.githubusercontent.com/15603058/119304604-73e45600-bca2-11eb-8f1d-607006919fab.png)
+### 기존 팀과제 이벤트와 신규 개인과제 이벤트 간 폴리시의 이동과 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
 
-### 완성된 1차 모형
+![기존 팀과제 이벤트와 신규 개인과제 이벤트 폴리시의 이동과 컨텍스트 매핑](https://user-images.githubusercontent.com/38099203/121222228-4f52c580-c8c1-11eb-85f2-b45053da983d.PNG)
 
-![image](https://user-images.githubusercontent.com/15603058/119305002-0edd3000-bca3-11eb-9cc0-1ba8b17f2432.png)
 
-    - View Model 추가
-
-### 1차 완성본에 대한 기능적/비기능적 요구사항을 커버하는지 검증
+### 기능적/비기능적 요구사항을 커버하는지 검증
 
 ![image](https://user-images.githubusercontent.com/15603058/119306321-f110ca80-bca4-11eb-804c-a965220bad61.png)
 
-    - 호스트가 임대할 숙소를 등록/수정/삭제한다.(ok)
-    - 고객이 숙소를 선택하여 예약한다.(ok)
-    - 예약과 동시에 결제가 진행된다.(ok)
-    - 예약이 되면 예약 내역(Message)이 전달된다.(?)
-    - 고객이 예약을 취소할 수 있다.(ok)
-    - 예약 사항이 취소될 경우 취소 내역(Message)이 전달된다.(?)
-    - 숙소에 후기(review)를 남길 수 있다.(ok)
-    - 전체적인 숙소에 대한 정보 및 예약 상태 등을 한 화면에서 확인 할 수 있다.(View-green Sticker 추가로 ok)
-    
+    - 회원 가입 시 최조 mileage를 부여하고 Review를 남길 경우 추가로 mileage를 부여한다.(ok)
+    - 임대 숙소 예약 결제 시 mileage를 사용할수 있다.(ok)
+    - 예약 지역 근처의 제휴상품 (activity, 맛집 이용권 등)을 등록하고 판매할수 있다.(ok)
+    - 제휴상품 결제 시 mileage를 사용할수 있다.(ok)
+    - 예약 및 제휴상품 구입 내역에 대해 Message 전달을 한다.(ok)
+    - mileage 및 제휴상품 구매 등을 한 화면에서 확인 할 수 있다.(viewpage)(ok)
+
 ### 모델 수정
 
-![image](https://user-images.githubusercontent.com/15603058/119307481-b740c380-bca6-11eb-9ee6-fda446e299bc.png)
-    
-    - 수정된 모델은 모든 요구사항을 커버함.
+![모델 수정](https://user-images.githubusercontent.com/38099203/121224805-e15bcd80-c8c3-11eb-91ae-34d087a97e59.PNG)
 
 ### 비기능 요구사항에 대한 검증
 
-![image](https://user-images.githubusercontent.com/15603058/119311800-79df3480-bcac-11eb-9c1b-0382d981f92f.png)
+![모델 수정_비기능 요구사항에 대한 검증](https://user-images.githubusercontent.com/38099203/121225928-f84eef80-c8c4-11eb-871f-04b3fd026e35.PNG)
 
-- 마이크로 서비스를 넘나드는 시나리오에 대한 트랜잭션 처리
-- 고객 예약시 결제처리:  결제가 완료되지 않은 예약은 절대 받지 않는다고 결정하여, ACID 트랜잭션 적용. 예약 완료시 사전에 방 상태를 확인하는 것과 결제처리에 대해서는 Request-Response 방식 처리
-- 결제 완료시 Host 연결 및 예약처리:  reservation 에서 room 마이크로서비스로 예약요청이 전달되는 과정에 있어서 room 마이크로 서비스가 별도의 배포주기를 가지기 때문에 Eventual Consistency 방식으로 트랜잭션 처리함.
-- 나머지 모든 inter-microservice 트랜잭션: 예약상태, 후기처리 등 모든 이벤트에 대해 데이터 일관성의 시점이 크리티컬하지 않은 모든 경우가 대부분이라 판단, Eventual Consistency 를 기본으로 채택함.
+    - 1) 결제시 mileage 차감이 같이 진행되어야 한다.  (Sync 호출)
+    - 2) 결제가 되지 않은 제휴상품 구매 건은 성립되지 않아야 한다.  (Sync 호출)
+    - 3) 제휴상품 등록 및 리뷰장성 시 mileage 추가 부여, 메시지 전송 기능이 수행되지 않더라도 예약 및 제휴상품 구매 등은 365일 24시간 받을 수 있어야 한다  Async (event-driven), Eventual Consistency
+    - 4) 회원 가입, mileage, 제휴상품 구매 등을 한번에 확인할 수 있어야 한다  (CQRS)
+    - 5) 상태가 바뀔 때마다 메시지로 알림을 줄 수 있어야 한다  (Event driven)
 
 
 ## 헥사고날 아키텍처 다이어그램 도출
