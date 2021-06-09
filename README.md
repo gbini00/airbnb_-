@@ -469,32 +469,82 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 
 ## DDD 의 적용
 
-- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. (예시는 room 마이크로 서비스). 이때 가능한 현업에서 사용하는 언어 (유비쿼터스 랭귀지)를 그대로 사용하려고 노력했다. 현실에서 발생가는한 이벤트에 의하여 마이크로 서비스들이 상호 작용하기 좋은 모델링으로 구현을 하였다.
+- 팀 프로젝트 때와 동일하게 신규로 추가된 회원 (Member), 제휴상품 주문 (Order), 제휴상품 (Affiliateproduct) 등을 Entity 로 선언하였다. (예시는 회원 (Member) 마이크로 서비스). 
+  이때 가능한 현업에서 사용하는 언어 (유비쿼터스 랭귀지)를 그대로 사용하려고 노력했다. 
+  현실에서 발생가는한 이벤트에 의하여 마이크로 서비스들이 상호 작용하기 좋은 모델링으로 구현을 하였다.
 
 ```
 package airbnb;
 
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
+import java.util.List;
+import java.util.Date;
 
 @Entity
-@Table(name="Room_table")
-public class Room {
+@Table(name="Member_table")
+public class Member {
 
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
-    private Long roomId;       // 방ID
-    private String status;     // 방 상태
-    private String desc;       // 방 상세 설명
-    private Long reviewCnt;    // 리뷰 건수
-    private String lastAction; // 최종 작업
+    @GeneratedValue(strategy=GenerationType.AUTO)
+    private Long memId;
+    private Long mileage;
+    private String status;
 
-    public Long getRoomId() {
-        return roomId;
+    @PostPersist
+    public void onPostPersist(){
+        MemberJoined memberJoined = new MemberJoined();
+        BeanUtils.copyProperties(this, memberJoined);
+        memberJoined.publishAfterCommit();
     }
 
-    public void setRoomId(Long roomId) {
-        this.roomId = roomId;
+    @PostUpdate
+    public void onPostUpdate(){
+        if(this.getStatus().equals("modifyMember")) {
+            MemberModified memberModified = new MemberModified();
+            BeanUtils.copyProperties(this, memberModified);
+            memberModified.publishAfterCommit();
+        }
+
+        if(this.getStatus().equals("deleteMember")) {
+            MemberDeleted memberDeleted = new MemberDeleted();
+            BeanUtils.copyProperties(this, memberDeleted);
+            memberDeleted.publishAfterCommit();
+        }
+
+        if(this.getStatus().equals("useMileage")) {
+            MileageUsed mileageUsed = new MileageUsed();
+            BeanUtils.copyProperties(this, mileageUsed);
+            mileageUsed.publishAfterCommit();
+        }
+
+        if(this.getStatus().equals("restoreMileage")) {
+            MileageRestored mileageRestored = new MileageRestored();
+            BeanUtils.copyProperties(this, mileageRestored);
+            mileageRestored.publishAfterCommit();
+        }
+
+        if(this.getStatus().equals("addMileage")) {
+            MileageAdded mileageAdded = new MileageAdded();
+            BeanUtils.copyProperties(this, mileageAdded);
+            mileageAdded.publishAfterCommit();
+        }
+    }
+
+
+    public Long getMemId() {
+        return memId;
+    }
+
+    public void setMemId(Long memId) {
+        this.memId = memId;
+    }
+    public Long getMileage() {
+        return mileage;
+    }
+
+    public void setMileage(Long mileage) {
+        this.mileage = mileage;
     }
     public String getStatus() {
         return status;
@@ -502,27 +552,6 @@ public class Room {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-    public String getDesc() {
-        return desc;
-    }
-
-    public void setDesc(String desc) {
-        this.desc = desc;
-    }
-    public Long getReviewCnt() {
-        return reviewCnt;
-    }
-
-    public void setReviewCnt(Long reviewCnt) {
-        this.reviewCnt = reviewCnt;
-    }
-    public String getLastAction() {
-        return lastAction;
-    }
-
-    public void setLastAction(String lastAction) {
-        this.lastAction = lastAction;
     }
 }
 
@@ -534,25 +563,115 @@ package airbnb;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-@RepositoryRestResource(collectionResourceRel="rooms", path="rooms")
-public interface RoomRepository extends PagingAndSortingRepository<Room, Long>{
+@RepositoryRestResource(collectionResourceRel="members", path="members")
+public interface MemberRepository extends PagingAndSortingRepository<Member, Long>{
 
 }
 ```
 - 적용 후 REST API 의 테스트
 ```
-# room 서비스의 room 등록
-http POST http://localhost:8088/rooms desc="Beautiful House"  
+# 회원 (member) 서비스의 회원 등록
+http POST http://a3db54e965c174fd1b51680316cebdda-58724595.ap-northeast-2.elb.amazonaws.com:8080/members mileage=10000 status="New Registered"
 
-# reservation 서비스의 예약 요청
-http POST http://localhost:8088/reservations roomId=1 status=reqReserve
+# 제휴상품 (affiliateproducts) 서비스의 제휴상품 등록
+http POST http://a3db54e965c174fd1b51680316cebdda-58724595.ap-northeast-2.elb.amazonaws.com:8080/affiliateproducts prdNm="Acyivity ##1" qty=1000 desc="스노클링"
 
-# reservation 서비스의 예약 상태 확인
-http GET http://localhost:8088/reservations
+# 제휴상품 주문(order) 서비스의 제휴상품 주문 등록
+http POST http://a3db54e965c174fd1b51680316cebdda-58724595.ap-northeast-2.elb.amazonaws.com:8080/orders prdId=1 qty=10 memId=1 mileageUsed=100 status=reqOrdered  
 
 ```
 
 ## 동기식 호출(Sync) 과 Fallback 처리
+
+### 개인 과제
+  제휴상품 주문 (Order) -> 결제(payment) 서비스에 대해 동기식으로 처리
+  
+  결제(payment) -> 회원 (Member)에 마일리지 사용 적용에 대해 동기식으로 처리
+![동기식 호출(Sync) 과 Fallback 처리_마일리지 사용 적용](https://user-images.githubusercontent.com/38099203/121385738-568ed780-c984-11eb-999f-2cfb965b4b5e.png)
+
+  결제(payment) 취소 시 -> 회원 (Member)에 마일리지 사용 적용 취소에 대해 동기식으로 처리
+![동기식 호출(Sync) 과 Fallback 처리_마일리지 사용 취소 적용](https://user-images.githubusercontent.com/38099203/121386288-d4eb7980-c984-11eb-88b5-b3eaa52c09bc.png)
+
+
+```
+결제(payment)에서 마일리지 사용 적용 취소 예문
+
+# MemberService.java
+
+package airbnb.external;
+
+<import문 생략>
+
+@FeignClient(name="member", url="${prop.room.url}")
+public interface MemberService {
+
+    @RequestMapping(method= RequestMethod.GET, path="/members/chkMileage")
+    public long chkMileage(@RequestParam("memId") long memId);
+
+}
+
+# Payment.java
+
+package airbnb.external;
+
+<import문 생략>
+
+    @PostPersist
+    public void onPostPersist(){
+        ////////////////////////////
+        // 결제 승인 된 경우
+        ////////////////////////////
+
+        //////////////////////////////
+        // mileage 차감 진행 (POST방식)
+        //////////////////////////////
+
+        long mileage = PaymentApplication.applicationContext.getBean(airbnb.external.MemberService.class).chkMileage(this.getMemId());
+
+        airbnb.external.Member member = new airbnb.external.Member();
+        member.setMemId(this.getMemId());
+        member.setMileage(mileage - this.getMileageUsed()); // mileage 감소
+        member.setStatus("useMileage");
+        PaymentApplication.applicationContext.getBean(airbnb.external.MemberService.class).useMileage(member);
+
+        // 이벤트 발행 -> PaymentApproved
+        PaymentApproved paymentApproved = new PaymentApproved();
+        BeanUtils.copyProperties(this, paymentApproved);
+        paymentApproved.publishAfterCommit();
+
+
+    }
+
+    @PostUpdate
+    public void onPostUpdate(){
+
+        //////////////////////
+        // 결제 취소 된 경우
+        //////////////////////
+
+        //////////////////////////////
+        // mileage 원복 진행 (POST방식)
+        //////////////////////////////
+        long mileage = PaymentApplication.applicationContext.getBean(airbnb.external.MemberService.class).chkMileage(this.getMemId());
+
+        airbnb.external.Member member = new airbnb.external.Member();
+        member.setMemId(this.getMemId());
+        member.setMileage(mileage + this.getMileageUsed()); // mileage 증가
+        member.setStatus("restoreMileage");
+        PaymentApplication.applicationContext.getBean(airbnb.external.MemberService.class).restoreMileage(member);
+
+        // 이벤트 발행 -> PaymentCancelled
+        PaymentCancelled paymentCancelled = new PaymentCancelled();
+        BeanUtils.copyProperties(this, paymentCancelled);
+        paymentCancelled.publishAfterCommit();
+
+    }
+
+
+```
+
+
+### 팀 프로젝트
 
 분석 단계에서의 조건 중 하나로 예약 시 숙소(room) 간의 예약 가능 상태 확인 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다. 또한 예약(reservation) -> 결제(payment) 서비스도 동기식으로 처리하기로 하였다.
 
@@ -658,6 +777,25 @@ http POST http://localhost:8088/reservations roomId=1 status=reqReserve   #Succe
 
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 
+### 개인 과제
+
+제휴상품에 대해 결제가 이루어진 후에 제휴상품 시스템 (Affiliateproducts)의 상태가 업데이트
+![비동기처리_주문](https://user-images.githubusercontent.com/38099203/121388782-bab29b00-c986-11eb-9a10-30762d96f105.png)
+![비동기처리_상품](https://user-images.githubusercontent.com/38099203/121388976-e5045880-c986-11eb-9a01-24489a9e808b.png)
+
+제휴상품 주문 시스템 (Order)의 상태 업데이트
+![비동기처리_주문 상태 업데이트](https://user-images.githubusercontent.com/38099203/121389171-1a10ab00-c987-11eb-86db-a8bd99aa53ef.png)
+
+주문 및 취소 메시지가 전송되는 시스템과의 통신 행위
+![비동기처리_주문 메시지](https://user-images.githubusercontent.com/38099203/121392410-5396e580-c98a-11eb-8e2c-9a975854c850.png)
+![비동기처리_주문 취소 메시지](https://user-images.githubusercontent.com/38099203/121395962-de2d1400-c98d-11eb-8680-537348c5313e.png)
+
+
+리뷰 작성 시 마일리지 부여 
+![비동기처리_리뷰 작성 시 마일리지 부여 ](https://user-images.githubusercontent.com/38099203/121396471-5e537980-c98e-11eb-9505-12a6c0434c35.png)
+
+
+### 팀 프로젝트
 
 결제가 이루어진 후에 숙소 시스템의 상태가 업데이트 되고, 예약 시스템의 상태가 업데이트 되며, 예약 및 취소 메시지가 전송되는 시스템과의 통신 행위는 비동기식으로 처리한다.
  
