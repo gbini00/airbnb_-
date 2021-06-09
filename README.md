@@ -441,6 +441,30 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 
 개인 과제에서는 제휴상품 주문(Order)을 하면 동시에 제휴상품 (Affiliateproduct), 결제(Payment) 등으로 구성
 
+제휴상품 주문
+![Correlation_제휴상품 주문](https://user-images.githubusercontent.com/38099203/121373209-d9f6fb80-c979-11eb-8e41-9471953a3be2.PNG)
+
+제휴상품 주문 후 제휴상품 상태
+![Correlation_제휴상품 주문 후 제휴상품 상태](https://user-images.githubusercontent.com/38099203/121373505-162a5c00-c97a-11eb-8ce2-af728c332788.PNG)
+
+제휴상품 주문 후 주문 상태
+![Correlation_제휴상품 주문 후 주문 상태](https://user-images.githubusercontent.com/38099203/121373868-630e3280-c97a-11eb-8618-8debf4a2f5f0.PNG)
+
+제휴상품 주문 후 결제 상태
+![Correlation_제휴상품 주문 후 결제 상태](https://user-images.githubusercontent.com/38099203/121374130-9b157580-c97a-11eb-9a32-3ab3621291f3.PNG)
+
+제휴상품 주문 취소
+![Correlation_제휴상품 주문 취소](https://user-images.githubusercontent.com/38099203/121374875-39a1d680-c97b-11eb-9944-7ea36e91e3af.PNG)
+
+제휴상품 주문 취소 후 제휴상품 상태
+![Correlation_제휴상품 주문 취소 후 제휴상품 상태](https://user-images.githubusercontent.com/38099203/121377588-6ce56500-c97d-11eb-868f-c5dd65c4d2a9.PNG)
+
+제휴상품 주문 취소 후 주문 상태
+![Correlation_제휴상품 주문 취소 후 주문 상태](https://user-images.githubusercontent.com/38099203/121377843-a4eca800-c97d-11eb-9f06-a354d93af4bc.PNG)
+
+제휴상품 주문 취소 후 결제 상태
+![Correlation_제휴상품 주문 취소 후 결제 상태](https://user-images.githubusercontent.com/38099203/121378067-d49bb000-c97d-11eb-87fd-3a1a3d84b598.PNG)
+
 
 
 ## DDD 의 적용
