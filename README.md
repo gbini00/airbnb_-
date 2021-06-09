@@ -290,47 +290,55 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 
 ## API 게이트웨이
       1. gateway 스프링부트 App을 추가 후 application.yaml내에 각 마이크로 서비스의 routes 를 추가하고 gateway 서버의 포트를 8080 으로 설정함
-       
+         member, order, affiliateproduct 신규 추가
           - application.yaml 예시
             ```
-            spring:
-              profiles: docker
-              cloud:
-                gateway:
-                  routes:
-                    - id: payment
-                      uri: http://payment:8080
-                      predicates:
-                        - Path=/payments/** 
-                    - id: room
-                      uri: http://room:8080
-                      predicates:
-                        - Path=/rooms/**, /reviews/**, /check/**
-                    - id: reservation
-                      uri: http://reservation:8080
-                      predicates:
-                        - Path=/reservations/**
-                    - id: message
-                      uri: http://message:8080
-                      predicates:
-                        - Path=/messages/** 
-                    - id: viewpage
-                      uri: http://viewpage:8080
-                      predicates:
-                        - Path= /roomviews/**
-                  globalcors:
-                    corsConfigurations:
-                      '[/**]':
-                        allowedOrigins:
-                          - "*"
-                        allowedMethods:
-                          - "*"
-                        allowedHeaders:
-                          - "*"
-                        allowCredentials: true
-
-            server:
-              port: 8080            
+			  profiles: docker
+			  cloud:
+				gateway:
+				  routes:
+					- id: payment
+					  uri: http://payment:8080
+					  predicates:
+						- Path=/payments/** 
+					- id: room
+					  uri: http://room:8080
+					  predicates:
+						- Path=/rooms/**, /reviews/**, /check/**
+					- id: reservation
+					  uri: http://reservation:8080
+					  predicates:
+						- Path=/reservations/**
+					- id: message
+					  uri: http://message:8080
+					  predicates:
+						- Path=/messages/** 
+					- id: viewpage
+					  uri: http://viewpage:8080
+					  predicates:
+						- Path= /roomviews/**
+					- id: member
+					  uri: http://member:8080
+					  predicates:
+						- Path=/members/** 
+					- id: affiliateproduct
+					  uri: http://affiliateproduct:8080
+					  predicates:
+						- Path=/affiliateproducts/**
+					- id: order
+					  uri: http://order:8080
+					  predicates:
+						- Path=/orders/**
+				  globalcors:
+					corsConfigurations:
+					  '[/**]':
+						allowedOrigins:
+						  - "*"
+						allowedMethods:
+						  - "*"
+						allowedHeaders:
+						  - "*"
+						allowCredentials: true           
             ```
 
          
@@ -358,7 +366,7 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
                 spec:
                   containers:
                     - name: gateway
-                      image: 247785678011.dkr.ecr.us-east-2.amazonaws.com/gateway:1.0
+                      image: 985702435631.dkr.ecr.ap-northeast-2.amazonaws.com/gateway:latest
                       ports:
                         - containerPort: 8080
             ```               
@@ -370,7 +378,7 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
             ```     
           - Kubernetes에 생성된 Deploy. 확인
             
-![image](https://user-images.githubusercontent.com/80744273/119321943-1d821200-bcb8-11eb-98d7-bf8def9ebf80.png)
+![gateway_deploy](https://user-images.githubusercontent.com/38099203/121364568-dd3ab900-c972-11eb-9a76-8fdc727c1eb7.png)
 	    
             
       3. Kubernetes용 Service.yaml을 작성하고 Kubernetes에 Service/LoadBalancer을 생성하여 Gateway 엔드포인트를 확인함. 
@@ -407,18 +415,11 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
             Service  및 엔드포인트 확인 
             kubectl get svc -n airbnb           
             ```                 
-![image](https://user-images.githubusercontent.com/80744273/119318358-2a046b80-bcb4-11eb-9d46-ef2d498c2cff.png)
+![gateway_endpoint](https://user-images.githubusercontent.com/38099203/121364917-2ab72600-c973-11eb-8e9b-9eda0ebdaf5e.png)
 
 # Correlation
 
-Airbnb 프로젝트에서는 PolicyHandler에서 처리 시 어떤 건에 대한 처리인지를 구별하기 위한 Correlation-key 구현을 
-이벤트 클래스 안의 변수로 전달받아 서비스간 연관된 처리를 정확하게 구현하고 있습니다. 
-
-아래의 구현 예제를 보면
-
-예약(Reservation)을 하면 동시에 연관된 방(Room), 결제(Payment) 등의 서비스의 상태가 적당하게 변경이 되고,
-예약건의 취소를 수행하면 다시 연관된 방(Room), 결제(Payment) 등의 서비스의 상태값 등의 데이터가 적당한 상태로 변경되는 것을
-확인할 수 있습니다.
+팀 프로젝트에서는 예약(Reservation)을 하면 동시에 연관된 방(Room), 결제(Payment) 등으로 구성
 
 예약등록
 ![image](https://user-images.githubusercontent.com/31723044/119320227-54572880-bcb6-11eb-973b-a9a5cd1f7e21.png)
@@ -436,6 +437,10 @@ Airbnb 프로젝트에서는 PolicyHandler에서 처리 시 어떤 건에 대한
 ![image](https://user-images.githubusercontent.com/31723044/119320747-dcd5c900-bcb6-11eb-9c44-fd3781c7c55f.png)
 취소 후 - 결제 상태
 ![image](https://user-images.githubusercontent.com/31723044/119320806-ee1ed580-bcb6-11eb-8ccf-8c81385cc8ba.png)
+
+
+개인 과제에서는 제휴상품 주문(Order)을 하면 동시에 제휴상품 (Affiliateproduct), 결제(Payment) 등으로 구성
+
 
 
 ## DDD 의 적용
