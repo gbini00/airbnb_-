@@ -241,10 +241,14 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 
 ### 신규 개인과제
 - Table 모델링 (ROOMVIEW)
+
   ![CQRS_Table 모델링 (ROOMVIEW)](https://user-images.githubusercontent.com/38099203/121299427-6086eb00-c930-11eb-9f45-67c72890a206.PNG)
+  
 - viewpage MSA ViewHandler 를 통해 구현 (회원가입 / 변경 시, 제휴상품 주문 시 등 추가)
+
   ![CQRS_회원가입이 되었을 때](https://user-images.githubusercontent.com/38099203/121299558-94621080-c930-11eb-9892-3ace34456b75.PNG)
   ![CQRS_제휴상품 주문이 확정되었을 때](https://user-images.githubusercontent.com/38099203/121299654-b8bded00-c930-11eb-90bb-a22d19ba1007.PNG)
+  
 - 실제로 view 페이지를 조회해 보면 모든 room에 대한 전반적인 예약 상태, 결제 상태, 리뷰 건수 등의 정보를 종합적으로 알 수 있다
   
  
