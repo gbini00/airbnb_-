@@ -961,6 +961,190 @@ codebuild 프로젝트 및 빌드 이력
 
 * 서킷 브레이킹 프레임워크의 선택: istio 사용하여 구현함
 
+### 개인 과제
+- CB 관련 설치
+
+```
+	# metric server 설치
+	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml
+
+	# helm, kafka 설치
+	https://github.com/helm/helm/releases
+	kubectl --namespace kube-system create sa tiller
+	kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+	helm repo add incubator https://charts.helm.sh/incubator
+	helm repo update
+	kubectl create ns kafka
+	helm install my-kafka --namespace kafka incubator/kafka
+	
+	# istio 설치
+	https://github.com/istio/istio/releases/download/1.7.1/istio-1.7.1-linux-amd64.tar.gz
+	https://github.com/istio/istio/releases/tag/1.7.1
+	istioctl install --set profile=demo --set hub=gcr.io/istio-release
+	kubectl apply -f samples/addons
+	
+	# kiali 설치 및 service type 변경
+	kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.7/samples/addons/kiali.yaml
+	kubectl edit svc kiali -n istio-system (ClusterIP -> LoadBalancer)
+		aa61caf40a8fd45668ab8cdf40f761d9-207959624.ap-northeast-2.elb.amazonaws.com:20001
+	kubectl edit svc tracing -n istio-system (ClusterIP -> LoadBalancer)
+		a0b5c6ea41b8147c2be1b134e4dd6611-711153361.ap-northeast-2.elb.amazonaws.com
+	kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.8/samples/addons/prometheus.yaml
+
+```
+
+-- 제휴상품 (Affiliateproduct)에 DestinationRule 를 생성하고 최소 connection pool 설정으로 circuit break 가 발생할 수 있도록 함
+```
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: dr-affiliateproduct
+  namespace: airbnb
+spec:
+  host: affiliateproduct
+  trafficPolicy:
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+#    outlierDetection:
+#      interval: 1s
+#      consecutiveErrors: 1
+#      baseEjectionTime: 10s
+#      maxEjectionPercent: 100
+
+# buildspec.yml 파일에 destination-rule.yml 추가
+    commands:
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$_PROJECT_NAME:latest
+      - echo connect kubectl
+      - kubectl config set-cluster k8s --server="$KUBE_URL" --insecure-skip-tls-verify=true
+      - kubectl config set-credentials admin --token="$KUBE_TOKEN"
+      - kubectl config set-context default --cluster=k8s --user=admin
+      - kubectl config use-context default
+      - kubectl replace -f kubernetes/deployment.yml --force
+      - kubectl replace -f kubernetes/service.yaml --force
+      - kubectl replace  -f kubernetes/destination-rule.yml --force
+```
+
+* istio-injection 활성화 및 affiliateproduct pod container 확인
+
+```
+kubectl get ns -L istio-injection
+kubectl label namespace airbnb istio-injection=enabled 
+```
+![CB_istio inject](https://user-images.githubusercontent.com/38099203/121407794-a8daf300-c99a-11eb-8f2c-2f651567e761.PNG)
+![CB_istio product pod 2개](https://user-images.githubusercontent.com/38099203/121408604-8e554980-c99b-11eb-849b-69889d4274be.PNG)
+
+* 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
+
+siege 실행
+
+```
+kubectl run siege --image=apexacme/siege-nginx -n airbnb
+kubectl exec -it siege -c siege -n airbnb -- /bin/bash
+```
+
+
+- 동시사용자 1로 부하 생성 시 모두 정상
+```
+siege -c1 -t10S -v --content-type "application/json" 'http://affiliateproduct:8080/affiliateproducts POST {"prdNm": "Acyivity ####", "qty": 1000, "desc": "스노클링"}'
+
+HTTP/1.1 201     0.00 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.02 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.00 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.00 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+
+Lifting the server siege...
+Transactions:                   1051 hits
+Availability:                 100.00 %
+Elapsed time:                   9.63 secs
+Data transferred:               0.31 MB
+Response time:                  0.01 secs
+Transaction rate:             109.14 trans/sec
+Throughput:                     0.03 MB/sec
+Concurrency:                    0.96
+Successful transactions:        1051
+Failed transactions:               0
+Longest transaction:            0.04
+```
+
+- 동시사용자 2로 부하 생성 시 503 에러 1024개 발생
+```
+siege -c2 -t10S -v --content-type "application/json" 'http://affiliateproduct:8080/affiliateproducts POST {"prdNm": "Acyivity ####", "qty": 1000, "desc": "스노클링"}'
+
+HTTP/1.1 201     0.02 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.00 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 503     0.01 secs:      81 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 503     0.00 secs:      81 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.02 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+siege aborted due to excessive socket failure; you
+can change the failure threshold in $HOME/.siegerc
+
+Transactions:                   6437 hits
+Availability:                  86.28 %
+Elapsed time:                  53.09 secs
+Data transferred:               1.96 MB
+Response time:                  0.02 secs
+Transaction rate:             121.25 trans/sec
+Throughput:                     0.04 MB/sec
+Concurrency:                    1.91
+Successful transactions:        6437
+Failed transactions:            1024
+Longest transaction:            0.69
+Shortest transaction:           0.00
+```
+
+- kiali 화면에 서킷 브레이크 확인
+
+![CB_kiali](https://user-images.githubusercontent.com/38099203/121415849-1b4fd100-c9a3-11eb-8a19-ee9ab3971126.PNG)
+
+
+- 다시 최소 Connection pool로 부하 다시 정상 확인
+
+```
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.02 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.01 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+
+Lifting the server siege...
+Transactions:                    941 hits
+Availability:                 100.00 %
+Elapsed time:                   9.89 secs
+Data transferred:               0.27 MB
+Response time:                  0.01 secs
+Transaction rate:              95.15 trans/sec
+Throughput:                     0.03 MB/sec
+Concurrency:                    0.96
+Successful transactions:         941
+Failed transactions:               0
+Longest transaction:            0.04
+Shortest transaction:           0.00
+
+```
+
+
+### 팀 프로젝트
+
 시나리오는 예약(reservation)--> 룸(room) 시의 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 예약 요청이 과도할 경우 CB 를 통하여 장애격리.
 
 - DestinationRule 를 생성하여 circuit break 가 발생할 수 있도록 설정
@@ -994,7 +1178,6 @@ kubectl label namespace airbnb istio-injection=enabled
 ```
 
 ![Circuit Breaker(istio-enjection)](https://user-images.githubusercontent.com/38099203/119295450-d6812600-bc91-11eb-8aad-46eeac968a41.PNG)
-
 ![Circuit Breaker(pod)](https://user-images.githubusercontent.com/38099203/119295568-0cbea580-bc92-11eb-9d2b-8580f3576b47.PNG)
 
 
@@ -1125,6 +1308,40 @@ Shortest transaction:           0.00
 
 
 ### 오토스케일 아웃
+
+#### 개인 과제
+- affiliateproduct 서비스의 deployment.yml 파일에 resources 설정을 추가하고 배포한다
+![auto scale (1)](https://user-images.githubusercontent.com/38099203/121416903-4e469480-c9a4-11eb-92d4-9f8f95a0e677.PNG)
+
+- affiliateproduct 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 30프로를 넘어서면 replica 를 10개까지 늘려준다:
+```
+kubectl autoscale deployment affiliateproduct -n airbnb --cpu-percent=30 --min=1 --max=10
+C:\my_project\airbnb_affiliateproduct>kubectl get hpa -n airbnb
+NAME               REFERENCE                     TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+affiliateproduct   Deployment/affiliateproduct   <unknown>/30%   1         10        0          11s
+```
+- 부하를 동시사용자 100명, 1분 동안 걸어준다.
+```
+siege -c100 -t60S -r10 -v --content-type "application/json" 'http://affiliateproduct:8080/affiliateproducts POST {"prdNm": "Acyivity ####", "qty": 1000, "desc": "스노클링"}'
+```
+- 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다
+```
+C:\my_project\airbnb_affiliateproduct>kubectl get deploy affiliateproduct -w -n airbnb
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+affiliateproduct   1/1     1            1           118s
+affiliateproduct   1/2     1            1           2m14s
+affiliateproduct   1/2     1            1           2m14s
+affiliateproduct   1/2     1            1           2m14s
+affiliateproduct   1/2     2            1           2m14s
+affiliateproduct   2/2     2            2           2m46s
+affiliateproduct   2/3     2            2           4m16s
+affiliateproduct   2/3     2            2           4m16s
+affiliateproduct   2/3     2            2           4m16s
+affiliateproduct   2/3     3            2           4m16s
+```
+
+
+#### 팀 프로젝트
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
 - room deployment.yml 파일에 resources 설정을 추가한다
@@ -1165,6 +1382,165 @@ Shortest transaction:           0.01
 ```
 
 ## 무정지 재배포
+
+#### 개인 과제
+
+```
+# 초기화 
+kubectl delete destinationrules dr-affiliateproduct -n airbnb
+kubectl label namespace airbnb istio-injection-
+kubectl delete hpa affiliateproduct -n airbnb
+
+# deployment.yml 파일에 readinessProbe, livenessProbe 주석처리 후 배포
+#          resources:
+#            requests:
+#              memory: "256Mi"
+#              cpu: "1000m"
+#            limits:
+#              memory: "512Mi"
+#              cpu: "2500m"
+#          args:
+#            - /bin/sh
+#            - -c
+#            - touch /tmp/healthy; sleep 90; rm -rf /tmp/healthy; sleep 600
+#          readinessProbe:
+#            httpGet:
+#              path: '/actuator/health'
+#              port: 8080
+#            exec:
+#              command:
+#              - cat
+#              - /tmp/healthy
+#            initialDelaySeconds: 25
+#            timeoutSeconds: 2
+#            periodSeconds: 5
+#            failureThreshold: 5
+#            successThreshold: 1
+#          livenessProbe:
+#            httpGet:
+#              path: '/actuator/health'
+#              port: 8080
+#            exec:
+#              command:
+#              - cat
+#              - /tmp/healthy
+#            initialDelaySeconds: 60
+#            timeoutSeconds: 2
+#            periodSeconds: 5
+#            failureThreshold: 5
+#            successThreshold: 1
+```
+
+- seige 로 배포작업 직전에 워크로드를 모니터링 함.
+```
+siege -c100 -t60S -r10 -v --content-type "application/json" 'http://affiliateproduct:8080/affiliateproducts POST {"prdNm": "Acyivity ####", "qty": 1000, "desc": "스노클링"}'
+
+** SIEGE 4.0.4
+** Preparing 1 concurrent users for battle.
+The server is now under siege...
+HTTP/1.1 201     0.51 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.03 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.29 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.10 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     1.13 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.38 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.02 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.04 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.03 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.30 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.06 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.77 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.70 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.15 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.28 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.44 secs:     306 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+HTTP/1.1 201     0.20 secs:     308 bytes ==> POST http://affiliateproduct:8080/affiliateproducts
+
+```
+
+- 새버전으로의 배포 시작
+```
+kubectl set image ......
+```
+
+- seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+
+```
+
+Transactions:                   7732 hits
+Availability:                  87.32 %
+Elapsed time:                  17.12 secs
+Data transferred:               1.93 MB
+Response time:                  0.18 secs
+Transaction rate:             451.64 trans/sec
+Throughput:                     0.11 MB/sec
+Concurrency:                   81.21
+Successful transactions:        7732
+Failed transactions:            1123
+Longest transaction:            0.94
+Shortest transaction:           0.00
+
+```
+- 배포기간중 Availability 가 평소 100%에서 87% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함
+
+```
+# deployment.yaml 의 readiness probe 의 설정:
+
+      containers:
+        - name: affiliateproduct
+          image: 985702435631.dkr.ecr.ap-northeast-2.amazonaws.com/affiliateproduct:latest
+          ports:
+            - containerPort: 8080
+#          resources:
+#            requests:
+#              memory: "256Mi"
+#              cpu: "1000m"
+#            limits:
+#              memory: "512Mi"
+#              cpu: "2500m"
+#          args:
+#            - /bin/sh
+#            - -c
+#            - touch /tmp/healthy; sleep 90; rm -rf /tmp/healthy; sleep 600
+          readinessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+#            exec:
+#              command:
+#              - cat
+#              - /tmp/healthy
+            initialDelaySeconds: 25
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 5
+            successThreshold: 1
+
+kubectl apply -f kubernetes/deployment.yml
+```
+
+- 동일한 시나리오로 재배포 한 후 Availability 확인:
+```
+Lifting the server siege...
+Transactions:                  27657 hits
+Availability:                 100.00 %
+Elapsed time:                  59.41 secs
+Data transferred:               6.91 MB
+Response time:                  0.21 secs
+Transaction rate:             465.53 trans/sec
+Throughput:                     0.12 MB/sec
+Concurrency:                   99.60
+Successful transactions:       27657
+Failed transactions:               0
+Longest transaction:            1.20
+Shortest transaction:           0.00
+
+```
+
+배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
+
+
+#### 팀 프로젝트
 
 * 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
 
@@ -1251,6 +1627,41 @@ Shortest transaction:           0.00
 
 
 # Self-healing (Liveness Probe)
+
+## 개인 과제
+- affiliateproduct deployment.yml 파일 수정 
+```
+콘테이너 실행 후 /tmp/healthy 파일을 만들고 
+90초 후 삭제
+livenessProbe에 'cat /tmp/healthy'으로 검증하도록 함
+
+          livenessProbe:
+#            httpGet:
+#              path: '/actuator/health'
+#              port: 8080
+            exec:
+              command:
+              - cat
+              - /tmp/healthy
+            initialDelaySeconds: 60
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 5
+            successThreshold: 1
+
+```
+- kubectl describe pod affiliateproduct -n airbnb 실행으로 확인
+```
+컨테이너 실행 후 90초 동인은 정상이나 이후 /tmp/healthy 파일이 삭제되어 livenessProbe에서 실패를 리턴하게 됨
+pod 정상 상태 일때 pod 진입하여 /tmp/healthy 파일 생성해주면 정상 상태 유지됨
+```
+![Liveness(1)](https://user-images.githubusercontent.com/38099203/121430113-a8e6ed00-c9b2-11eb-948e-11932f121d3b.PNG)
+![Liveness(2)](https://user-images.githubusercontent.com/38099203/121430152-b56b4580-c9b2-11eb-99fa-573213dcec13.PNG)
+
+
+
+
+## 팀 프로젝트
 - room deployment.yml 파일 수정 
 ```
 콘테이너 실행 후 /tmp/healthy 파일을 만들고 
@@ -1265,10 +1676,297 @@ livenessProbe에 'cat /tmp/healthy'으로 검증하도록 함
 pod 정상 상태 일때 pod 진입하여 /tmp/healthy 파일 생성해주면 정상 상태 유지됨
 ```
 
+
 ![get pod tmp healthy](https://user-images.githubusercontent.com/38099203/119318781-a9923a80-bcb4-11eb-9783-65051ec0d6e8.PNG)
 ![touch tmp healthy](https://user-images.githubusercontent.com/38099203/119319050-f118c680-bcb4-11eb-8bca-aa135c1e067e.PNG)
 
+
+
+
+
 # Config Map/ Persistence Volume
+## 개인 과제
+- Persistence Volume
+
+1: EFS 생성
+```
+EFS 생성 시 클러스터의 VPC를 선택해야함
+```
+![클러스터의 VPC를 선택해야함](https://user-images.githubusercontent.com/38099203/119364089-85048580-bce9-11eb-8001-1c20a93b8e36.PNG)
+
+![EFS생성](https://user-images.githubusercontent.com/38099203/119343415-60041880-bcd1-11eb-9c25-1695c858f6aa.PNG)
+
+2. EFS 계정 생성 및 ROLE 바인딩
+```
+kubectl apply -f efs-sa.yml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: efs-provisioner
+  namespace: airbnb
+
+
+kubectl get ServiceAccount efs-provisioner -n airbnb
+NAME              SECRETS   AGE
+efs-provisioner   1         9m1s  
+  
+  
+  
+kubectl apply -f efs-rbac.yaml
+
+namespace를 반듯이 수정해야함
+
+  
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: efs-provisioner-runner
+  namespace: airbnb
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "update", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: run-efs-provisioner
+  namespace: airbnb
+subjects:
+  - kind: ServiceAccount
+    name: efs-provisioner
+     # replace with namespace where provisioner is deployed
+    namespace: airbnb
+roleRef:
+  kind: ClusterRole
+  name: efs-provisioner-runner
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: leader-locking-efs-provisioner
+  namespace: airbnb
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: leader-locking-efs-provisioner
+  namespace: airbnb
+subjects:
+  - kind: ServiceAccount
+    name: efs-provisioner
+    # replace with namespace where provisioner is deployed
+    namespace: airbnb
+roleRef:
+  kind: Role
+  name: leader-locking-efs-provisioner
+  apiGroup: rbac.authorization.k8s.io
+
+
+```
+
+3. EFS Provisioner 배포
+```
+kubectl apply -f efs-provisioner-deploy.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: efs-provisioner
+  namespace: airbnb
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: efs-provisioner
+  template:
+    metadata:
+      labels:
+        app: efs-provisioner
+    spec:
+      serviceAccount: efs-provisioner
+      containers:
+        - name: efs-provisioner
+          image: quay.io/external_storage/efs-provisioner:latest
+          env:
+            - name: FILE_SYSTEM_ID
+              value: fs-562f9c36
+            - name: AWS_REGION
+              value: ap-northeast-2
+            - name: PROVISIONER_NAME
+              value: my-aws.com/aws-efs
+          volumeMounts:
+            - name: pv-volume
+              mountPath: /persistentvolumes
+      volumes:
+        - name: pv-volume
+          nfs:
+            server: fs-562f9c36.efs.ap-northeast-2.amazonaws.com
+            path: /
+
+
+kubectl get Deployment efs-provisioner -n airbnb
+NAME              READY   UP-TO-DATE   AVAILABLE   AGE
+efs-provisioner   1/1     1            1           11m
+
+```
+
+4. 설치한 Provisioner를 storageclass에 등록
+```
+kubectl apply -f efs-storageclass.yml
+
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: aws-efs
+  namespace: airbnb
+provisioner: my-aws.com/aws-efs
+
+
+kubectl get sc aws-efs -n airbnb
+NAME            PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+aws-efs         my-aws.com/aws-efs      Delete          Immediate              false                  4s
+```
+
+5. PVC(PersistentVolumeClaim) 생성
+```
+kubectl apply -f volume-pvc.yml
+
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aws-efs
+  namespace: airbnb
+  labels:
+    app: test-pvc
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 6Ki
+  storageClassName: aws-efs
+  
+  
+kubectl get pvc aws-efs -n airbnb
+NAME      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+aws-efs   Bound    pvc-43f6fe12-b9f3-400c-ba20-b357c1639f00   6Ki        RWX            aws-efs        4m44s
+```
+
+6. affiliateproduct pod 적용
+```
+테스트를 위해 replicas: 2로 함
+
+spec:
+  replicas: 2
+  
+  ......
+          readinessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+#            exec:
+#              command:
+#              - cat
+#              - /tmp/healthy
+            initialDelaySeconds: 25
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+#            exec:
+#              command:
+#              - cat
+#              - /tmp/healthy
+            initialDelaySeconds: 60
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 5
+            successThreshold: 1
+          env:
+            - name: MAX_RESERVATION_PER_PERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: airbnb-config
+                  key: max_reservation_per_person
+            - name: UI_PROPERTIES_FILE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: airbnb-config
+                  key: ui_properties_file_name
+          volumeMounts:
+          - mountPath: "/mnt/aws"
+            name: volume
+      volumes:
+        - name: volume
+          persistentVolumeClaim:
+            claimName: aws-efs
+```
+
+
+
+7. A pod에서 마운트된 경로에 파일을 생성하고 B pod에서 파일을 확인함
+```
+NAME                                    READY   STATUS             RESTARTS   AGE
+pod/affiliateproduct-7d66cf477-d6r85    1/1     Running            2          5m5s
+pod/affiliateproduct-7d66cf477-zlg2t    1/1     Running            2          5m5s
+
+A pod
+kubectl exec -it pod/affiliateproduct-7d66cf477-d6r85 affiliateproduct -n airbnb -- /bin/sh
+
+C:\my_project\airbnb_affiliateproduct>kubectl exec -it pod/affiliateproduct-7d66cf477-d6r85 affiliateproduct -n airbnb -- /bin/sh
+/ # cd /mnt/aws
+/mnt/aws # touch intensive_course_work
+/mnt/aws # ls -al
+total 8
+drwxrws--x    2 root     2000          6144 May 24 15:44 .
+drwxr-xr-x    1 root     root            17 Jun  9 21:21 ..
+-rw-r--r--    1 root     2000             0 Jun  9 21:26 intensive_course_work
+/mnt/aws #
+```
+```
+B pod
+kubectl exec -it pod/affiliateproduct-7d66cf477-zlg2t affiliateproduct -n airbnb -- /bin/sh
+
+
+C:\my_project\airbnb_affiliateproduct\kubernetes>kubectl exec -it pod/affiliateproduct-7d66cf477-zlg2t affiliateproduct -n airbnb -- /bin/sh
+/ # cd /mnt/aws
+/mnt/aws # ls -al
+total 8
+drwxrws--x    2 root     2000          6144 May 24 15:44 .
+drwxr-xr-x    1 root     root            17 Jun  9 21:21 ..
+-rw-r--r--    1 root     2000             0 Jun  9 21:26 intensive_course_work
+
+```
+
+
+
+
+
+## 팀 프로젝트
 - Persistence Volume
 
 1: EFS 생성
