@@ -1878,7 +1878,14 @@ aws-efs   Bound    pvc-43f6fe12-b9f3-400c-ba20-b357c1639f00   6Ki        RWX    
 
 spec:
   replicas: 2
-  
+  ......
+      spec:
+      serviceAccount: efs-provisioner
+      containers:
+        - name: affiliateproduct
+          image: 985702435631.dkr.ecr.ap-northeast-2.amazonaws.com/affiliateproduct:latest
+          ports:
+            - containerPort: 8080
   ......
           readinessProbe:
             httpGet:
