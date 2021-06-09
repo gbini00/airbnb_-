@@ -260,8 +260,31 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
   ![CQRS_주문 확정 시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121357012-60a4dc00-c96c-11eb-8000-555b59b77f6a.PNG)
 
   
+## 신규 개인과제 기능 소개
+- 회원 등록, 변경 기능 (신규)
   
-- view 페이지를 조회해 보면 모든 room에 대한 전반적인 예약 상태, 결제 상태, 리뷰 건수 등의 정보를 종합적으로 알 수 있다
+  회원 등록
+  ![신규개인과제개요_회원등록](https://user-images.githubusercontent.com/38099203/121359693-b24e6600-c96e-11eb-9536-d66b1814a898.PNG)
+  
+  회원 수정
+  ![신규개인과제개요_회원수정](https://user-images.githubusercontent.com/38099203/121360033-048f8700-c96f-11eb-868b-659c354ee097.PNG)
+  
+- 제휴상품 등록, 변경 기능 (신규)
+
+  제휴상품 등록
+  ![신규개인과제개요_제휴상품등록](https://user-images.githubusercontent.com/38099203/121360526-7667d080-c96f-11eb-87ae-3eea3eba01a2.PNG)
+  
+  제휴상품 변경
+  ![신규개인과제개요_제휴상품변경](https://user-images.githubusercontent.com/38099203/121360810-b3cc5e00-c96f-11eb-9a6f-91d946810742.PNG)
+
+- 제휴 상품 주문 기능 (주문 시 마일리지 사용 가능) (신규 + 수정 (팀 과제인 Payment에 수정))
+  ![신규개인과제개요_제휴상품주문](https://user-images.githubusercontent.com/38099203/121361410-39500e00-c970-11eb-8181-5f88e66c7e22.PNG)
+
+- 리뷰 작성 시 마일리지 제공 (수정 (팀 과제인 review에 수정) )
+  ![신규개인과제개요_리뷰작성 시 마일리지 부여](https://user-images.githubusercontent.com/38099203/121361931-ab285780-c970-11eb-9b49-667ec6a3ed7c.PNG)
+
+- 회원 정보 변경 및 주문 시 메시지 알람 기능 (수정 (팀 과제인 message에 수정) )
+  ![신규개인과제개요_메시지알람기능](https://user-images.githubusercontent.com/38099203/121362226-ec206c00-c970-11eb-851c-8121a0f57fe3.PNG)
   
  
 
