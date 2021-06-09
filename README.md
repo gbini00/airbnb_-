@@ -234,22 +234,40 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 ## CQRS
 
 ### 기존 팀과제 
-숙소(Room) 의 사용가능 여부, 리뷰 및 예약/결재 등 총 Status 에 대하여 고객(Customer)이 조회 할 수 있도록 CQRS 로 구현하였다.
+숙소(Room) 의 사용가능 여부, 리뷰 및 예약/결재 등 총 Status 에 대하여 고객(Customer)이 조회 할 수 있도록 CQRS 로 구현
 - room, review, reservation, payment 개별 Aggregate Status 를 통합 조회하여 성능 Issue 를 사전에 예방할 수 있다.
 - 비동기식으로 처리되어 발행된 이벤트 기반 Kafka 를 통해 수신/처리 되어 별도 Table 에 관리한다
 
 
 ### 신규 개인과제
 - Table 모델링 (ROOMVIEW)
+  기존 팀 과제때와 같이 사용할수 있도록 PK를 roomViewId로 변경하고 자동 생성되게 함
 
-  ![CQRS_Table 모델링 (ROOMVIEW)](https://user-images.githubusercontent.com/38099203/121299427-6086eb00-c930-11eb-9f45-67c72890a206.PNG)
+  ![CQRS_Table 모델링 (ROOMVIEW)](https://user-images.githubusercontent.com/38099203/121352503-e7a38580-c967-11eb-83c7-84ec0e23ddbe.PNG)
   
-- viewpage MSA ViewHandler 를 통해 구현 (회원가입 / 변경 시, 제휴상품 주문 시 등 추가)
+- 회원정보, 제휴상품 주문 정보 생성 변경 시 roomView에 같이 저장되록 함
 
-  ![CQRS_회원가입이 되었을 때](https://user-images.githubusercontent.com/38099203/121299558-94621080-c930-11eb-9892-3ace34456b75.PNG)
-  ![CQRS_제휴상품 주문이 확정되었을 때](https://user-images.githubusercontent.com/38099203/121299654-b8bded00-c930-11eb-90bb-a22d19ba1007.PNG)
+  회뤈 가입 시 처리 부분
+  ![CQRS_회원가입이 되었을 때](https://user-images.githubusercontent.com/38099203/121353400-ca22eb80-c968-11eb-83bf-65aa163358c4.PNG)
+
+  회원 가입 시 roomView 메시지 부분
+  ![CQRS_회원가입시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121353733-271ea180-c969-11eb-8ea9-a5532b1414d8.PNG)
+
+  제휴 상품 주문 시 처리부분
+  ![CQRS_제휴상품 주문이 되었을 때](https://user-images.githubusercontent.com/38099203/121353943-5cc38a80-c969-11eb-9106-f1323f6703cd.PNG)
   
-- 실제로 view 페이지를 조회해 보면 모든 room에 대한 전반적인 예약 상태, 결제 상태, 리뷰 건수 등의 정보를 종합적으로 알 수 있다
+  제휴 상품 주문 시 roomView 메시지 부분
+  ![CQRS_주문시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121354425-d52a4b80-c969-11eb-9fde-2f41a1cd309a.PNG)
+
+  제휴 상품 주문 확정 시 처리부분
+  ![CQRS_제휴상품 주문이 되었을 때](https://user-images.githubusercontent.com/38099203/121353943-5cc38a80-c969-11eb-9106-f1323f6703cd.PNG)
+  
+  제휴 상품 주문 확정 시 roomView 메시지 부분
+  ![CQRS_주문 확정 시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121355496-e58ef600-c96a-11eb-800d-13ad5852f81d.PNG)
+
+  
+  
+- view 페이지를 조회해 보면 모든 room에 대한 전반적인 예약 상태, 결제 상태, 리뷰 건수 등의 정보를 종합적으로 알 수 있다
   
  
 
