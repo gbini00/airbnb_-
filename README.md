@@ -233,18 +233,21 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 
 ## CQRS
 
+### 기존 팀과제 
 숙소(Room) 의 사용가능 여부, 리뷰 및 예약/결재 등 총 Status 에 대하여 고객(Customer)이 조회 할 수 있도록 CQRS 로 구현하였다.
 - room, review, reservation, payment 개별 Aggregate Status 를 통합 조회하여 성능 Issue 를 사전에 예방할 수 있다.
 - 비동기식으로 처리되어 발행된 이벤트 기반 Kafka 를 통해 수신/처리 되어 별도 Table 에 관리한다
+
+
+### 신규 개인과제
 - Table 모델링 (ROOMVIEW)
-
-  ![image](https://user-images.githubusercontent.com/77129832/119319352-4b198c00-bcb5-11eb-93bc-ff0657feeb9f.png)
-- viewpage MSA ViewHandler 를 통해 구현 ("RoomRegistered" 이벤트 발생 시, Pub/Sub 기반으로 별도 Roomview 테이블에 저장)
-  ![image](https://user-images.githubusercontent.com/77129832/119321162-4d7ce580-bcb7-11eb-9030-29ee6272c40d.png)
-  ![image](https://user-images.githubusercontent.com/31723044/119350185-fccab400-bcd9-11eb-8269-61868de41cc7.png)
+  ![CQRS_Table 모델링 (ROOMVIEW)](https://user-images.githubusercontent.com/38099203/121299427-6086eb00-c930-11eb-9f45-67c72890a206.PNG)
+- viewpage MSA ViewHandler 를 통해 구현 (회원가입 / 변경 시, 제휴상품 주문 시 등 추가)
+  ![CQRS_회원가입이 되었을 때](https://user-images.githubusercontent.com/38099203/121299558-94621080-c930-11eb-9892-3ace34456b75.PNG)
+  ![CQRS_제휴상품 주문이 확정되었을 때](https://user-images.githubusercontent.com/38099203/121299654-b8bded00-c930-11eb-90bb-a22d19ba1007.PNG)
 - 실제로 view 페이지를 조회해 보면 모든 room에 대한 전반적인 예약 상태, 결제 상태, 리뷰 건수 등의 정보를 종합적으로 알 수 있다
-  ![image](https://user-images.githubusercontent.com/31723044/119357063-1b34ad80-bce2-11eb-94fb-a587261ab56f.png)
-
+  
+ 
 
 ## API 게이트웨이
       1. gateway 스프링부트 App을 추가 후 application.yaml내에 각 마이크로 서비스의 routes 를 추가하고 gateway 서버의 포트를 8080 으로 설정함
