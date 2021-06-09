@@ -247,23 +247,17 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
   
 - 회원정보, 제휴상품 주문 정보 생성 변경 시 roomView에 같이 저장되록 함
 
-  회뤈 가입 시 처리 부분
+  회원 가입 시 처리 부분
   ![CQRS_회원가입이 되었을 때](https://user-images.githubusercontent.com/38099203/121353400-ca22eb80-c968-11eb-83bf-65aa163358c4.PNG)
 
   회원 가입 시 roomView 메시지 부분
-  ![CQRS_회원가입시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121353733-271ea180-c969-11eb-8ea9-a5532b1414d8.PNG)
-
-  제휴 상품 주문 시 처리부분
-  ![CQRS_제휴상품 주문이 되었을 때](https://user-images.githubusercontent.com/38099203/121353943-5cc38a80-c969-11eb-9106-f1323f6703cd.PNG)
-  
-  제휴 상품 주문 시 roomView 메시지 부분
-  ![CQRS_주문시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121354425-d52a4b80-c969-11eb-9fde-2f41a1cd309a.PNG)
+  ![CQRS_회원가입시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121357288-a6fa3b00-c96c-11eb-9392-8778a9381073.PNG)
 
   제휴 상품 주문 확정 시 처리부분
   ![CQRS_제휴상품 주문이 되었을 때](https://user-images.githubusercontent.com/38099203/121353943-5cc38a80-c969-11eb-9106-f1323f6703cd.PNG)
   
   제휴 상품 주문 확정 시 roomView 메시지 부분
-  ![CQRS_주문 확정 시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121355496-e58ef600-c96a-11eb-800d-13ad5852f81d.PNG)
+  ![CQRS_주문 확정 시 viewpage 데이터](https://user-images.githubusercontent.com/38099203/121357012-60a4dc00-c96c-11eb-8000-555b59b77f6a.PNG)
 
   
   
