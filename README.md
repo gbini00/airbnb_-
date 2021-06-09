@@ -879,6 +879,41 @@ http GET localhost:8088/reservations    #메시지 서비스와 상관없이 예
 
 ## CI/CD 설정
 
+### 개인 과제
+- 회원(Member) 제휴상품 주문 (Order), 제휴상품 (Affiliateproduct)에 대해 CodeBuild 프로젝트를 생성
+
+```
+    CodeBuild 프로젝트 생성
+	AWS_ACCOUNT_ID 환경 변수 세팅 (ERC 레파지토리 room에 대한 푸시 명령)
+	KUBE_URL 환경 변수 세팅 (EKS 클러스터 API 서버 엔드포인트)
+	KUBE_TOKEN 환경 변수 세팅
+		kubectl apply -f eks-admin-service-account.yml
+		kubectl apply -f eks-admin-cluster-role-binding.yml
+		kubectl -n kube-system get secret
+			eks-admin-token-rjpmq                            kubernetes.io/service-account-token   3      2m5s
+		kubectl -n kube-system describe secret eks-admin-token-rjpmq
+
+```
+- codebuild 실행
+```
+codebuild 프로젝트 및 빌드 이력
+```
+![codebuild](https://user-images.githubusercontent.com/38099203/121400497-9fe62380-c992-11eb-9163-afb564a24c3b.PNG)
+
+- 회원(Member) codebuild 빌드 내역
+![Member 빌드기록](https://user-images.githubusercontent.com/38099203/121402253-9e1d5f80-c994-11eb-95f5-e2315dc5ab20.PNG)
+![Member 빌드로그](https://user-images.githubusercontent.com/38099203/121404296-cc03a380-c996-11eb-88b3-ffc0da6dcce1.PNG)
+
+- 제휴상품 주문 (Order) codebuild 빌드 내역
+![Order 빌드기록](https://user-images.githubusercontent.com/38099203/121404633-15ec8980-c997-11eb-889f-22adb00b10b7.PNG)
+![Order 빌드로그](https://user-images.githubusercontent.com/38099203/121404771-3caac000-c997-11eb-91ad-40c889530d0e.PNG)
+
+- 제휴상품 (Affiliateproduct) codebuild 빌드 내역
+![Product 빌드기록](https://user-images.githubusercontent.com/38099203/121405665-48e34d00-c998-11eb-9d43-998fbb1dc5e3.PNG)
+![Product 빌드로그](https://user-images.githubusercontent.com/38099203/121405698-526cb500-c998-11eb-9058-ba19cff1b9cb.PNG)
+
+
+### 팀 프로젝트
 각 구현체들은 각자의 source repository 에 구성되었고, 사용한 CI/CD는 buildspec.yml을 이용한 AWS codebuild를 사용하였습니다.
 
 - CodeBuild 프로젝트를 생성하고 AWS_ACCOUNT_ID, KUBE_URL, KUBE_TOKEN 환경 변수 세팅을 한다
