@@ -187,9 +187,9 @@ Mileage 결제 및 제휴상품 구매 기능 추가하기
 ![기존 팀과제 이벤트와 신규 개인과제 이벤트 폴리시의 이동과 컨텍스트 매핑](https://user-images.githubusercontent.com/38099203/121222228-4f52c580-c8c1-11eb-85f2-b45053da983d.PNG)
 
 
-### 기능적/비기능적 요구사항을 커버하는지 검증
+### 기능적/비기능적 요구사항을 커버하는지 1차 검증
 
-![image](https://user-images.githubusercontent.com/15603058/119306321-f110ca80-bca4-11eb-804c-a965220bad61.png)
+![기존 팀과제 이벤트와 신규 개인과제 이벤트 1차 검증](https://user-images.githubusercontent.com/38099203/121446338-40a60480-c9ce-11eb-93b1-9bc343f5ad33.PNG)
 
     - 회원 가입 시 최조 mileage를 부여하고 Review를 남길 경우 추가로 mileage를 부여한다.(ok)
     - 임대 숙소 예약 결제 시 mileage를 사용할수 있다.(ok)
@@ -1643,7 +1643,7 @@ livenessProbe에 'cat /tmp/healthy'으로 검증하도록 함
               command:
               - cat
               - /tmp/healthy
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             timeoutSeconds: 2
             periodSeconds: 5
             failureThreshold: 5
